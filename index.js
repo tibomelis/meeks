@@ -56,11 +56,11 @@ async function init() {
     });
 
     const commandFiles = fs
-        .readdirSync('./interactions/')
+        .readdirSync('./interactions/slashcommands/')
         .filter((file) => file.endsWith('.js'));
 
     for (const file of commandFiles) {
-        const filePath = './interactions/' + file;
+        const filePath = './interactions/slashcommands/' + file;
         const command = require(filePath);
         if ('data' in command && 'execute' in command) {
             slashCommands.set(command.data.name, command);
