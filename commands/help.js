@@ -18,8 +18,17 @@ module.exports = {
 
         embed.setTitle('Help - home');
         embed.setDescription('This is the help menu!');
-        embed.setColor('0xa2db6b');
+        embed.setColor('#a2db6b');
 
-        msg.channel.send({ embeds: [embed] });
+        const buttons = new Discord.ActionRowBuilder();
+        const btn_info = new Discord.ButtonBuilder();
+
+        btn_info.setCustomId('help:info');
+        btn_info.setLabel('Bot Info');
+        btn_info.setStyle(Discord.ButtonStyle.Primary);
+
+        buttons.addComponents(btn_info);
+
+        msg.channel.send({ embeds: [embed], components: [buttons] });
     },
 };
