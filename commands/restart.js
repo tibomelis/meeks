@@ -31,7 +31,7 @@ module.exports = {
                 windowsHide: true,
             });
         } else {
-            exec('node index.js', {
+            exec('node ./index.js', {
                 windowsHide: true,
             });
             setTimeout(() => {
