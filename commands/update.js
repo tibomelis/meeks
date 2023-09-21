@@ -29,7 +29,7 @@ module.exports = {
         });
 
         exec(
-            'git pull && npm i',
+            'git pull origin main && npm i',
             { windowsHide: true },
             (err, syncMsg, stderr) => {
                 var changed = true;
