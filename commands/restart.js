@@ -27,7 +27,7 @@ module.exports = {
         );
 
         if (checkForPm2()) {
-            execSync('pm2 restart Tibo_Bot', {
+            execSync('pm2 restart meeks', {
                 windowsHide: true,
             });
         } else {

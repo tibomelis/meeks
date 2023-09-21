@@ -18,7 +18,7 @@ module.exports = {
      */
     async execute(client, msg, args, curPrefix) {
         const prefixes = JSON.parse(
-            fs.readFileSync('./config/prefixes.json')
+            fs.readFileSync('./storage/prefixes.json')
         );
 
         var updateEmbed = new Discord.EmbedBuilder()
