@@ -25,23 +25,8 @@ module.exports = {
                 channel_id: bot_msg.channel.id,
             })
         );
-
-        // if (checkForPm2()) {
-        //     execSync('pm2 restart meeks', {
-        //         windowsHide: true,
-        //     });
-        // } else {
-        exec('node ./index.js', {
+        execSync('pm2 restart meeks', {
             windowsHide: true,
         });
-        setTimeout(() => {
-            process.exit();
-        }, 100);
-        // }
-
-        // function checkForPm2() {
-        //     const result = execSync('pm2 -h').toString();
-        //     return result.includes('Usage: pm2 [cmd] app');
-        // }
     },
 };
