@@ -1,4 +1,6 @@
 const Discord = require('discord.js');
+const fs = require('fs');
+
 module.exports = {
     name: 'help', // required! (usually the same as file name)
     short: '', // if you want it
@@ -21,13 +23,14 @@ module.exports = {
         embed.setColor('#a2db6b');
 
         const buttons = new Discord.ActionRowBuilder();
-        const btn_info = new Discord.ButtonBuilder();
 
-        btn_info.setCustomId('help:info');
-        btn_info.setLabel('Bot Info');
-        btn_info.setStyle(Discord.ButtonStyle.Primary);
-
-        buttons.addComponents(btn_info);
+        fs.readdirSync('./interactions/buttons/')
+            .filter((btn) => btn.endsWith('js') && btn.startsWith('help'))
+            .forEach((btn) =>
+                buttons.addComponents(
+                    require(`../interactions/buttons/${btn}`)
+                )
+            );
 
         msg.channel.send({ embeds: [embed], components: [buttons] });
     },

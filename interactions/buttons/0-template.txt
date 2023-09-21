@@ -1,0 +1,6 @@
+const { ButtonBuilder, ButtonStyle } = require('discord.js');
+
+module.exports = new ButtonBuilder()
+    .setCustomId('')
+    .setLabel('')
+    .setStyle(ButtonStyle);

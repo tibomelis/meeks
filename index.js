@@ -3,6 +3,7 @@ const Discord = require('discord.js');
 const { TOKEN } = process.env;
 const fs = require('fs');
 
+const buttonHandler = require('./interactions/buttons/buttonHandler');
 const client = new Discord.Client({
     intents: new Discord.IntentsBitField().add([
         'DirectMessages',
@@ -17,43 +18,46 @@ const client = new Discord.Client({
     ]),
 });
 
-var commands = new Discord.Collection();
-var slashCommands = new Discord.Collection();
-var prefixes;
-var prefix;
+var col_chatCommands = new Discord.Collection();
+var col_slashInteractions = new Discord.Collection();
+var dict_prefixes;
+var str_prefix;
 
 async function init() {
+    // if there is no 'storage' folder, create folder.
     if (!fs.existsSync('./storage')) fs.mkdirSync('./storage');
 
+    // get server prefixes (for chat commands)
     if (fs.existsSync('./storage/prefixes.json')) {
-        prefixes = JSON.parse(
+        dict_prefixes = JSON.parse(
             fs.readFileSync('./storage/prefixes.json').toString()
         );
     } else {
-        prefixes = {};
-        prefixes.default = ';;';
+        dict_prefixes = {};
+        dict_prefixes.default = ';;';
         fs.writeFileSync(
             './storage/prefixes.json',
-            JSON.stringify(prefixes)
+            JSON.stringify(dict_prefixes)
         );
     }
 
-    console.log('Loading commands...');
-
+    // load chat commands
     fs.readdirSync('./commands/')
         .filter((cmd) => cmd != 'index.js' && cmd.endsWith('.js'))
         .forEach((commandName) => {
             var command = require('./commands/' +
                 commandName.replace('.js', ''));
-            commands[command.name] = command;
+            col_chatCommands[command.name] = command;
             if (command.short != '' && command.short != undefined) {
-                commands[command.short] = command;
+                col_chatCommands[command.short] = command;
             }
         });
 
-    Object.keys(commands).forEach((key) => {
-        commands.set((key = key), commands[key]);
+    Object.keys(col_chatCommands).forEach((key) => {
+        col_chatCommands.set((key = key), col_chatCommands[key]);
     });
+
+    // load slash commands
 
     const commandFiles = fs
         .readdirSync('./interactions/slashcommands/')
@@ -63,7 +67,7 @@ async function init() {
         const filePath = './interactions/slashcommands/' + file;
         const command = require(filePath);
         if ('data' in command && 'execute' in command) {
-            slashCommands.set(command.data.name, command);
+            col_slashInteractions.set(command.data.name, command);
         } else {
             console.log(
                 `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`
@@ -119,34 +123,34 @@ client.on('ready', async () => {
 client.on('messageCreate', async (msg) => {
     if (msg.author.id == client.user.id) return;
 
-    if (prefixes[msg.guildId] == undefined) {
-        prefixes[msg.guildId] = prefixes.default;
+    if (dict_prefixes[msg.guildId] == undefined) {
+        dict_prefixes[msg.guildId] = dict_prefixes.default;
         fs.writeFileSync(
             './storage/prefixes.json',
-            JSON.stringify(prefixes)
+            JSON.stringify(dict_prefixes)
         );
     }
 
-    prefix = prefixes[msg.guildId];
+    str_prefix = dict_prefixes[msg.guildId];
 
     if (msg.cleanContent.includes('🗿')) msg.react('🗿');
     if (msg.content.includes('<@' + client.user.id + '>')) {
-        msg.channel.send("i'm here! (prefix: " + prefix + ')');
+        msg.channel.send("i'm here! (prefix: " + str_prefix + ')');
     }
 
     // commands
-    if (!msg.cleanContent.startsWith(prefix)) return;
+    if (!msg.cleanContent.startsWith(str_prefix)) return;
 
     const args = msg.cleanContent.split(/ +/g);
-    const command = args.shift().toLowerCase().slice(prefix.length);
+    const command = args.shift().toLowerCase().slice(str_prefix.length);
 
-    if (!commands.has(command)) {
+    if (!col_chatCommands.has(command)) {
         msg.reply("Didn't recognize " + command);
         return;
     }
 
     try {
-        var cmnd = commands.get(command);
+        var cmnd = col_chatCommands.get(command);
         if (cmnd.disabled) {
             if (
                 cmnd.allowedGuilds == undefined ||
@@ -161,7 +165,7 @@ client.on('messageCreate', async (msg) => {
                 );
             }
         }
-        cmnd.execute(client, msg, args, prefix);
+        cmnd.execute(client, msg, args, str_prefix);
     } catch (err) {
         console.log(
             'Something went wrong while executing a command.',
@@ -179,33 +183,42 @@ client.on('guildCreate', async (guild) => {
 });
 
 client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
+    if (interaction.isButton()) {
+        try {
+            await buttonHandler.handle(interaction);
+        } catch (err) {
+            console.log(err);
+            interaction.channel.send(
+                'There was an error while handling this button!'
+            );
+        }
+    } else if (interaction.isChatInputCommand()) {
+        const command = col_slashInteractions.get(interaction.commandName);
 
-    const command = slashCommands.get(interaction.commandName);
+        if (!command) {
+            console.error(
+                `No command matching ${interaction.commandName} was found.`
+            );
+            return;
+        }
 
-    if (!command) {
-        console.error(
-            `No command matching ${interaction.commandName} was found.`
-        );
-        return;
-    }
-
-    try {
-        await command.execute(interaction);
-    } catch (error) {
-        console.log(error);
-        if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({
-                content:
-                    'There was an error while executing this command!',
-                ephemeral: true,
-            });
-        } else {
-            await interaction.reply({
-                content:
-                    'There was an error while executing this command!',
-                ephemeral: true,
-            });
+        try {
+            await command.execute(interaction);
+        } catch (error) {
+            console.log(error);
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp({
+                    content:
+                        'There was an error while executing this command!',
+                    ephemeral: true,
+                });
+            } else {
+                await interaction.reply({
+                    content:
+                        'There was an error while executing this command!',
+                    ephemeral: true,
+                });
+            }
         }
     }
 });

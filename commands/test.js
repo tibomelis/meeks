@@ -1,7 +1,7 @@
 const Discord = require('discord.js');
 module.exports = {
     name: 'test', // required! (usually the same as file name)
-    short: '', // if you want it
+    short: 't', // if you want it
     description: 'tests this..', // usefull, not required
     category: 'debug', // empty for 'misc'
     disabled: false,
