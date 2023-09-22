@@ -24,7 +24,7 @@ module.exports = {
 
             const buttons = new ActionRowBuilder();
 
-            fs.readdirSync('./interactions/buttons/')
+            fs.readdirSync('./')
                 .filter(
                     (btn) =>
                         btn.endsWith('js') &&
@@ -32,9 +32,7 @@ module.exports = {
                         btn != 'help_home'
                 )
                 .forEach((btn) =>
-                    buttons.addComponents(
-                        require(`../interactions/buttons/${btn}`)
-                    )
+                    buttons.addComponents(require(`./${btn}`))
                 );
 
             const commands = fs
