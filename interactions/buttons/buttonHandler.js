@@ -12,6 +12,19 @@ module.exports = {
             const embed = new EmbedBuilder();
             // help buttons
 
+            const commands = fs
+                .readdirSync('./commands/')
+                .filter((cmd) => cmd.endsWith('.js') && cmd != 'index.js')
+                .map((cmd) => {
+                    const command = require(`./../../commands/${cmd}`);
+                    var name = command.name;
+                    if (command.short != '') name += ` (${command.short})`;
+                    return {
+                        name,
+                        value: command.description,
+                    };
+                });
+
             if (interaction.customId.endsWith('home')) {
                 embed
                     .setTitle('Help - Home')
@@ -21,28 +34,22 @@ module.exports = {
                 embed
                     .setTitle('Help - Info')
                     .setDescription('Some information about the bot')
-                    .setColor('#6bb9db');
+                    .setColor('#6bb9db')
+                    .addFields(
+                        {
+                            name: 'Creator:',
+                            value: 'Tibo Melis. (tiibo)',
+                        },
+                        {
+                            name: 'Amount of commands:',
+                            value: `Currently at ${commands.length}`,
+                        }
+                    );
             } else if (interaction.customId.endsWith('commands')) {
                 embed
                     .setTitle('Help - Commands')
                     .setDescription('These are all the current commands')
                     .setColor('#dbc86b');
-
-                const commands = fs
-                    .readdirSync('./commands/')
-                    .filter(
-                        (cmd) => cmd.endsWith('.js') && cmd != 'index.js'
-                    )
-                    .map((cmd) => {
-                        const command = require(`./../../commands/${cmd}`);
-                        var name = command.name;
-                        if (command.short != '')
-                            name += ` (${command.short})`;
-                        return {
-                            name,
-                            value: command.description,
-                        };
-                    });
 
                 embed.addFields(commands);
             }
