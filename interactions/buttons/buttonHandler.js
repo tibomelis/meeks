@@ -29,7 +29,7 @@ module.exports = {
                     (btn) =>
                         btn.endsWith('js') &&
                         btn.startsWith('help') &&
-                        btn != 'help_home'
+                        btn != 'help_home.js'
                 )
                 .forEach((btn) =>
                     buttons.addComponents(require(`./${btn}`))
