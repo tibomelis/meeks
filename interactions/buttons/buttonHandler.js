@@ -22,7 +22,7 @@ module.exports = {
             const embed = new EmbedBuilder();
             // help buttons
 
-            const buttons = new Discord.ActionRowBuilder();
+            const buttons = new ActionRowBuilder();
 
             fs.readdirSync('./interactions/buttons/')
                 .filter(
