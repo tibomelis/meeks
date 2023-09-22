@@ -22,7 +22,7 @@ module.exports = {
             const embed = new EmbedBuilder();
             // help buttons
 
-            const buttons = new ActionRowBuilder();
+            var buttons = new ActionRowBuilder();
 
             fs.readdirSync('./')
                 .filter(
@@ -69,14 +69,18 @@ module.exports = {
                         }
                     );
 
-                buttons.setComponents(require(`./help_home`));
+                buttons = new ActionRowBuilder().addComponents(
+                    require(`./help_home`)
+                );
             } else if (interaction.customId.endsWith('commands')) {
                 embed
                     .setTitle('Help - Commands')
                     .setDescription('These are all the current commands')
                     .setColor('#dbc86b');
 
-                buttons.setComponents(require(`./help_home`));
+                buttons = new ActionRowBuilder().addComponents(
+                    require(`./help_home`)
+                );
 
                 const categories = [];
                 chatCommands.forEach((c) => {
