@@ -24,17 +24,17 @@ module.exports = {
 
             var buttons = new ActionRowBuilder();
 
-            fs.readdirSync('./')
+            fs.readdirSync('./interactions/buttons/')
                 .filter(
                     (btn) =>
                         btn.endsWith('js') &&
                         btn.startsWith('help') &&
                         btn != 'help_home.js'
                 )
-                .forEach((btn) =>
-                    buttons.addComponents(require(`./${btn}`))
-                );
-
+                .forEach((btn) => {
+                    console.log(btn);
+                    buttons.addComponents(require(`./${btn}`));
+                });
             const commands = fs
                 .readdirSync('./commands/')
                 .filter((cmd) => cmd.endsWith('.js') && cmd != 'index.js')
@@ -69,18 +69,16 @@ module.exports = {
                         }
                     );
 
-                buttons = new ActionRowBuilder().addComponents(
-                    require(`./help_home`)
-                );
+                buttons = new ActionRowBuilder();
+                buttons.addComponents(require(`./help_home.js`));
             } else if (interaction.customId.endsWith('commands')) {
                 embed
                     .setTitle('Help - Commands')
                     .setDescription('These are all the current commands')
                     .setColor('#dbc86b');
 
-                buttons = new ActionRowBuilder().addComponents(
-                    require(`./help_home`)
-                );
+                buttons = new ActionRowBuilder();
+                buttons.addComponents(require(`./help_home.js`));
 
                 const categories = [];
                 chatCommands.forEach((c) => {
