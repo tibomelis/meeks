@@ -32,7 +32,6 @@ module.exports = {
                         btn != 'help_home.js'
                 )
                 .forEach((btn) => {
-                    console.log(btn);
                     buttons.addComponents(require(`./${btn}`));
                 });
             const commands = fs
