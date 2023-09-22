@@ -22,14 +22,19 @@ module.exports = {
             const embed = new EmbedBuilder();
             // help buttons
 
-            const buttons = new ActionRowBuilder();
+            const buttons = new Discord.ActionRowBuilder();
 
             fs.readdirSync('./interactions/buttons/')
                 .filter(
-                    (btn) => btn.endsWith('js') && btn.startsWith('help')
+                    (btn) =>
+                        btn.endsWith('js') &&
+                        btn.startsWith('help') &&
+                        btn != 'help_home'
                 )
                 .forEach((btn) =>
-                    buttons.addComponents(require(`./${btn}`))
+                    buttons.addComponents(
+                        require(`../interactions/buttons/${btn}`)
+                    )
                 );
 
             const commands = fs
@@ -65,6 +70,8 @@ module.exports = {
                             value: `Currently at ${commands.length}`,
                         }
                     );
+
+                buttons.setComponents(require(`./help_home`));
             } else if (interaction.customId.endsWith('commands')) {
                 embed
                     .setTitle('Help - Commands')

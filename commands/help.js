@@ -18,14 +18,20 @@ module.exports = {
     async execute(client, msg, args, curPrefix) {
         const embed = new Discord.EmbedBuilder();
 
-        embed.setTitle('Help - home');
-        embed.setDescription('This is the help menu!');
-        embed.setColor('#a2db6b');
+        embed
+            .setTitle('Help - Home')
+            .setDescription('This is the help menu!')
+            .setColor('#a2db6b');
 
         const buttons = new Discord.ActionRowBuilder();
 
         fs.readdirSync('./interactions/buttons/')
-            .filter((btn) => btn.endsWith('js') && btn.startsWith('help'))
+            .filter(
+                (btn) =>
+                    btn.endsWith('js') &&
+                    btn.startsWith('help') &&
+                    btn != 'help_home'
+            )
             .forEach((btn) =>
                 buttons.addComponents(
                     require(`../interactions/buttons/${btn}`)
