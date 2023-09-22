@@ -6,7 +6,7 @@ module.exports = {
     name: 'restart',
     short: '',
     description: 'restart the bot',
-    category: 'DangerZone',
+    category: 'dev',
     disabled: false,
 
     /**

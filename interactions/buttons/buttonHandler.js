@@ -1,16 +1,36 @@
-const { ButtonInteraction, EmbedBuilder } = require('discord.js');
+const {
+    ButtonInteraction,
+    EmbedBuilder,
+    ActionRowBuilder,
+    Collection,
+} = require('discord.js');
 const fs = require('fs');
 module.exports = {
     /**
      *
      * @param {ButtonInteraction} interaction
+     * @param {Collection<any, any>} chatCommands
      */
-    async handle(interaction) {
+    async handle(interaction, chatCommands) {
         interaction.deferUpdate();
+
+        if (interaction.customId.startsWith('commandcategory')) {
+            // categories and their commands
+        }
 
         if (interaction.customId.startsWith('help')) {
             const embed = new EmbedBuilder();
             // help buttons
+
+            const buttons = new ActionRowBuilder();
+
+            fs.readdirSync('./interactions/buttons/')
+                .filter(
+                    (btn) => btn.endsWith('js') && btn.startsWith('help')
+                )
+                .forEach((btn) =>
+                    buttons.addComponents(require(`./${btn}`))
+                );
 
             const commands = fs
                 .readdirSync('./commands/')
@@ -37,11 +57,11 @@ module.exports = {
                     .setColor('#6bb9db')
                     .addFields(
                         {
-                            name: 'Creator:',
+                            name: 'Creator',
                             value: 'Tibo Melis. (tiibo)',
                         },
                         {
-                            name: 'Amount of commands:',
+                            name: 'Amount of commands',
                             value: `Currently at ${commands.length}`,
                         }
                     );
@@ -51,10 +71,26 @@ module.exports = {
                     .setDescription('These are all the current commands')
                     .setColor('#dbc86b');
 
+                buttons.setComponents(require(`./help_home`));
+
+                const categories = [];
+                chatCommands.forEach((c) => {
+                    if (!categories.includes(c.category)) {
+                        categories.push(c.category);
+                    }
+                });
+
                 embed.addFields(commands);
+                embed.addFields({
+                    name: 'Categories',
+                    value: categories.join('\n'),
+                });
             }
 
-            interaction.message.edit({ embeds: [embed] });
+            interaction.message.edit({
+                embeds: [embed],
+                components: [buttons],
+            });
         }
     },
 };

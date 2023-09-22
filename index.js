@@ -185,7 +185,7 @@ client.on('guildCreate', async (guild) => {
 client.on('interactionCreate', async (interaction) => {
     if (interaction.isButton()) {
         try {
-            await buttonHandler.handle(interaction);
+            await buttonHandler.handle(interaction, col_chatCommands);
         } catch (err) {
             console.log(err);
             interaction.channel.send(

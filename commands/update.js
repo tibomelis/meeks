@@ -6,7 +6,7 @@ module.exports = {
     name: 'update',
     short: '',
     description: 'update the bot',
-    category: 'Settings',
+    category: 'dev',
     disabled: false,
 
     /**
