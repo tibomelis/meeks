@@ -17,13 +17,10 @@ module.exports = {
      * @param {String} curPrefix        // this bot prefix
      */
     async execute(client, msg, args, curPrefix) {
-        const prefixes = JSON.parse(
-            fs.readFileSync('./storage/prefixes.json')
-        );
-
         var updateEmbed = new Discord.EmbedBuilder()
-            .setColor('#0099ff')
+            .setColor('#ffd000')
             .setTitle('Getting temperature');
+
         var temperatureMsg = await msg.channel.send({
             embeds: [updateEmbed],
         });
@@ -54,11 +51,11 @@ module.exports = {
             updateEmbed.setFields([
                 {
                     name: 'Console output:',
-                    value: '```' + syncMsg + '```',
+                    value: '```' + syncMsg.toString() + '```',
                 },
             ]);
 
-            updateEmbed.setColor('orange');
+            updateEmbed.setColor('#ff9d00');
 
             temperatureMsg.edit({ embeds: [updateEmbed] });
         });
