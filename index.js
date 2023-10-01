@@ -130,9 +130,8 @@ client.on('messageCreate', async (msg) => {
         )
             .then((res) => res.json())
             .then(async (x) => {
-                console.log(x);
-                // const urls = x.results.map((c) => c.url);
-                // msg.reply(urls[Math.floor(Math.random() * urls.length)]);
+                const urls = x.results.map((c) => c.url);
+                msg.reply(urls[Math.floor(Math.random() * urls.length)]);
             });
 
     if (dict_prefixes[msg.guildId] == undefined) {
