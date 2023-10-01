@@ -1,6 +1,6 @@
 require('dotenv').config();
 const Discord = require('discord.js');
-const { TOKEN } = process.env;
+const { TOKEN, RANDOMGIFKEY } = process.env;
 const fs = require('fs');
 
 const buttonHandler = require('./interactions/buttons/buttonHandler');
@@ -124,9 +124,15 @@ client.on('messageCreate', async (msg) => {
     if (msg.author.id == client.user.id) return;
 
     if (msg.cleanContent.includes('duolingo'))
-        msg.reply(
-            'https://tenor.com/view/animation-roblox-duolingo-jumpscare-gif-26348324'
-        );
+        fetch(
+            `https://tenor.googleapis.com/v2/search?q=duolingo&key=${RANDOMGIFKEY}&client_key=randomgif&limit=50`,
+            { method: 'GET' }
+        )
+            .then((res) => res.json())
+            .then(async (x) => {
+                const urls = x.results.map((c) => c.url);
+                msg.reply(urls[Math.floor(Math.random() * urls.length)]);
+            });
 
     if (dict_prefixes[msg.guildId] == undefined) {
         dict_prefixes[msg.guildId] = dict_prefixes.default;
