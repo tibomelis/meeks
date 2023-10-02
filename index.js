@@ -123,17 +123,6 @@ client.on('ready', async () => {
 client.on('messageCreate', async (msg) => {
     if (msg.author.id == client.user.id) return;
 
-    if (msg.cleanContent.includes('duolingo'))
-        fetch(
-            `https://tenor.googleapis.com/v2/search?q=duolingo&key=${RANDOMGIFKEY}&client_key=randomgif&limit=50`,
-            { method: 'GET' }
-        )
-            .then((res) => res.json())
-            .then(async (x) => {
-                const urls = x.results.map((c) => c.url);
-                msg.reply(urls[Math.floor(Math.random() * urls.length)]);
-            });
-
     if (dict_prefixes[msg.guildId] == undefined) {
         dict_prefixes[msg.guildId] = dict_prefixes.default;
         fs.writeFileSync(
