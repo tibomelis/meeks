@@ -2,7 +2,6 @@ const Discord = require('discord.js');
 const disVoice = require('@discordjs/voice');
 const fs = require('fs');
 const googleTTS = require('google-tts-api');
-const cf = require('./customFunctions');
 
 module.exports = {
     name: 'say',
@@ -19,7 +18,9 @@ module.exports = {
      * @param {String} curPrefix
      */
     async execute(client, msg, args, curPrefix) {
-        await cf.mkdir_if_not_exist(`./storage/per_user_config/`);
+        if (!fs.existsSync(`./storage/per_user_config/`)) {
+            fs.mkdirSync(`./storage/per_user_config/`);
+        }
 
         if (
             !fs.existsSync(
