@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 const fs = require('fs');
-const { exec, execSync } = require('child_process');
+const { execSync } = require('child_process');
 
 module.exports = {
     name: 'restart',

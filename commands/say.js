@@ -90,7 +90,7 @@ module.exports = {
 
         async function play_next() {
             var recource = recources.shift();
-            if (recource == undefined) {
+            if (!recource) {
                 connection.disconnect();
                 return;
             }
