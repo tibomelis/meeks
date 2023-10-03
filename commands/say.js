@@ -91,6 +91,7 @@ module.exports = {
         async function play_next() {
             var recource = recources.shift();
             if (!recource) {
+                await new Promise((res) => setTimeout(() => res(), 1000));
                 connection.disconnect();
                 return;
             }
