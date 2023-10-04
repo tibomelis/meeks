@@ -114,7 +114,9 @@ module.exports = {
         var connection = disVoice.getVoiceConnection(interaction.guildId);
 
         // create a recource from the file
-        const recource = disVoice.createAudioResource(fileurl);
+        const recource = disVoice.createAudioResource(fileurl, {
+            inlineVolume: true,
+        });
         recource.volume.setVolume(0.5);
 
         // create an audio player and play the sound in the channel via the connection
