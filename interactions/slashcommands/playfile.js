@@ -6,8 +6,6 @@ const {
     ComponentType,
     ButtonStyle,
     ActionRowBuilder,
-    SlashCommandStringOption,
-    ApplicationCommandOptionWithChoicesAndAutocompleteMixin,
     StringSelectMenuBuilder,
     StringSelectMenuOptionBuilder,
 } = require('discord.js');
@@ -99,7 +97,6 @@ module.exports = {
                 msg.edit({ embeds: [embed] });
                 return;
             }
-
             fileurl = uploaded_file.url;
             filename = uploaded_file.name;
         }
@@ -113,17 +110,18 @@ module.exports = {
         // get the connection
         var connection = disVoice.getVoiceConnection(interaction.guildId);
 
-        // create a recource from the file
-        const recource = disVoice.createAudioResource(fileurl, {
+        // create a resource from the file
+
+        const resource = disVoice.createAudioResource(fileurl, {
             inlineVolume: true,
         });
-        recource.volume.setVolume(0.5);
+        resource.volume.setVolume(0.5);
 
         // create an audio player and play the sound in the channel via the connection
         var player = disVoice.createAudioPlayer();
 
         connection.subscribe(player);
-        player.play(recource);
+        player.play(resource);
 
         var btn = new ButtonBuilder();
         if (!uploaded_file) {
