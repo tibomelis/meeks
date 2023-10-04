@@ -92,7 +92,8 @@ module.exports = {
             var recource = recources.shift();
             if (!recource) {
                 await new Promise((res) => setTimeout(() => res(), 1000));
-                connection.disconnect();
+                if (player.state != disVoice.AudioPlayerStatus.Playing)
+                    connection.disconnect();
                 return;
             }
             player.play(recource);
