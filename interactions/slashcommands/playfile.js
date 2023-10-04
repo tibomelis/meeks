@@ -115,6 +115,7 @@ module.exports = {
 
         // create a recource from the file
         const recource = disVoice.createAudioResource(fileurl);
+        recource.volume.setVolume(0.5);
 
         // create an audio player and play the sound in the channel via the connection
         var player = disVoice.createAudioPlayer();
@@ -135,9 +136,9 @@ module.exports = {
                 .setEmoji('🗃️')
                 .setStyle(ButtonStyle.Success);
 
-            if (uploaded_file.size > 1024000) {
+            if (uploaded_file.size > 10240000) {
                 btn.setDisabled(true).setLabel(
-                    'Save Sound (Disabled because file size is equal or larger than 1mb'
+                    'Save Sound (Disabled because file size is equal or larger than 10mb'
                 );
             }
         }
