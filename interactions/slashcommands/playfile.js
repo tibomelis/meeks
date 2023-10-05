@@ -16,6 +16,12 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('playsound')
         .setDescription('play an attached sound in vc')
+        .addStringOption((option) =>
+            option
+                .setName('filename')
+                .setDescription('A optional custom file name.')
+                .setRequired(false)
+        )
         .addAttachmentOption((option) =>
             option
                 .setName('upload_audio')
@@ -42,6 +48,8 @@ module.exports = {
         // get the uploaded file
         const uploaded_file =
             interaction.options.getAttachment('upload_audio');
+
+        const custom_filename = interaction.options.getString('filename');
 
         /** @type {string} */
         var fileurl;
@@ -98,7 +106,9 @@ module.exports = {
                 return;
             }
             fileurl = uploaded_file.url;
-            filename = uploaded_file.name;
+            filename = custom_filename
+                ? custom_filename
+                : uploaded_file.name;
         }
 
         // join the channel the user is in.
