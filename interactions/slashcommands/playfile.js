@@ -56,6 +56,8 @@ module.exports = {
         /** @type {string} */
         var filename;
 
+        var failed = false;
+
         if (!uploaded_file) {
             if (fs.readdirSync('./storage/audio/').length == 0) {
                 embed.setTitle('No saved sounds.').setColor('Purple');
@@ -94,7 +96,7 @@ module.exports = {
                         )
                         .setColor('Red');
                     msg.edit({ embeds: [embed], components: [] });
-                    var failed = true;
+                    failed = true;
                 });
             if (failed) return;
 
