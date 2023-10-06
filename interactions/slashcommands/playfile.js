@@ -93,7 +93,7 @@ module.exports = {
                             'No response in time. Try again with uploading an audio file.'
                         )
                         .setColor('Red');
-                    msg.edit({ embeds: [embed] });
+                    msg.edit({ embeds: [embed], components: [] });
                 });
 
             filename = res.values[0];
