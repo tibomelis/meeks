@@ -94,7 +94,9 @@ module.exports = {
                         )
                         .setColor('Red');
                     msg.edit({ embeds: [embed], components: [] });
+                    var failed = true;
                 });
+            if (failed) return;
 
             filename = res.values[0];
             fileurl = './storage/audio/' + filename;
