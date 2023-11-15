@@ -34,10 +34,8 @@ module.exports = {
         exec(
             args.join(' '),
             { windowsHide: true },
-            (err, syncMsg, stderr) => {
-                var changed = true;
-
-                if (err) {
+            (error, stdout, stderr) => {
+                if (error) {
                     embed.setDescription(
                         `Ran into an error when trying to execute the command.`
                     );
@@ -55,18 +53,13 @@ module.exports = {
                     return;
                 }
 
-                embed.setTitle('Output');
-
-                embed.setFields([
-                    {
-                        name: 'Console output:',
-                        value: '```' + syncMsg.toString() + '```',
-                    },
-                ]);
-
-                embed.setColor('#ff9d00');
+                embed
+                    .setTitle('Console output:')
+                    .setColor('#ff9d00')
+                    .setFields();
 
                 commandMsg.edit({ embeds: [embed] });
+                commandMsg.channel.send('```' + stdout.toString() + '```');
             }
         );
     },
