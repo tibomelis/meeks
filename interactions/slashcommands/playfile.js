@@ -111,7 +111,7 @@ module.exports = {
             }
             fileurl = uploaded_file.url;
             filename = custom_filename
-                ? custom_filename
+                ? custom_filename + '.mp4'
                 : uploaded_file.name;
         }
 
@@ -129,7 +129,7 @@ module.exports = {
         const resource = disVoice.createAudioResource(fileurl, {
             inlineVolume: true,
         });
-        resource.volume.setVolume(0.5);
+        resource.volume.setVolume(0.1);
 
         // create an audio player and play the sound in the channel via the connection
         var player = disVoice.createAudioPlayer();
