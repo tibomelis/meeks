@@ -27,7 +27,7 @@ module.exports = {
 
         if (msg.author.id != '457897694426300418') {
             embed.setTitle('No permission!').setColor('Red');
-            commandMsg.edit(embed);
+            await commandMsg.edit({ embeds: [embed] });
             return;
         }
 
