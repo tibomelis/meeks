@@ -19,6 +19,7 @@ module.exports = {
      */
     async execute(client, msg, args, curPrefix) {
         await new Promise((res) => setTimeout(() => res(), 100)); // let da bird do that filter
+        if (!msg) return
 
         if (!fs.existsSync(`./storage/per_user_config/`)) {
             fs.mkdirSync(`./storage/per_user_config/`);
