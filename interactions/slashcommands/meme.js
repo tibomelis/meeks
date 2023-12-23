@@ -109,21 +109,6 @@ module.exports = {
         if (bottomtext)
             drawText(ctx, bottomtext, maxW, 0, canvas.height, true);
 
-        /*
-        if (toptext) {
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, 200);
-            ctx.fillStyle = '#fff';
-            ctx.fillText(toptext, 0, 0);
-        }
-        if (bottomtext) {
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, canvas.height - 200, canvas.width, 200);
-            ctx.fillStyle = '#fff';
-            ctx.fillText(bottomtext, 0, canvas.height - 200);
-        }
-        */
-
         const file = new AttachmentBuilder()
             .setFile(canvas.toBuffer())
             .setName('img.png');
