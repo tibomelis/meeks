@@ -5,7 +5,7 @@ const {
     AttachmentBuilder,
 } = require('discord.js');
 
-const { loadImage, createCanvas } = require('canvas');
+const { loadImage, createCanvas } = require('@napi-rs/canvas');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -83,7 +83,7 @@ module.exports = {
         const size = 2000;
         var aspect = 1;
 
-        const canvas = createCanvas();
+        const canvas = createCanvas(img.width, img.height);
         const ctx = canvas.getContext('2d');
 
         if (img.width > img.height) {
@@ -110,7 +110,7 @@ module.exports = {
             drawText(ctx, bottomtext, maxW, 0, canvas.height, true);
 
         const file = new AttachmentBuilder()
-            .setFile(canvas.toBuffer())
+            .setFile(canvas.toBuffer('image/png'))
             .setName('img.png');
 
         embed.setImage(`attachment://${file.name}`);
