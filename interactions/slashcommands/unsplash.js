@@ -67,11 +67,12 @@ module.exports = {
             )
             .setColor('LightGrey');
         const name = `image.${blob.type.replace('image/', '')}`;
-        const file = new AttachmentBuilder(Buffer.from(arraybuffer), name);
+        const file = new AttachmentBuilder(Buffer.from(arraybuffer), {
+            name,
+        });
 
         embed.setImage(`attachment://${name}`);
-        interaction.channel.send(`the name is ${name}`);
-        
+
         interaction.editReply({
             embeds: [embed],
             files: [file],
