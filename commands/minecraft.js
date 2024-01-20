@@ -1,4 +1,3 @@
-const { loadImage } = require('canvas');
 const Discord = require('discord.js');
 module.exports = {
     name: 'minecraft', // required! (usually the same as file name)
@@ -29,7 +28,7 @@ module.exports = {
             );
 
         const embed = new Discord.EmbedBuilder();
-        embed.setColor(`0x${randomColor()}`);
+        embed.setColor('Green');
         var title = args.join(':');
         embed.setTitle(args[0]);
         embed.setImage('attachment://file.jpg');
@@ -58,14 +57,4 @@ async function getData(ip, port = '') {
     const json = await r.json();
 
     return json;
-}
-function randomColor() {
-    const possible = '0123456789abcdef'.split('');
-    var temp = '';
-    for (var i = 0; i < 6; i++) {
-        temp = temp.concat(
-            possible[Math.floor(Math.random() * possible.length)]
-        );
-    }
-    return temp;
 }
