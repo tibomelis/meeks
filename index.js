@@ -183,6 +183,34 @@ client.on('guildCreate', async (guild) => {
 });
 
 client.on('interactionCreate', async (interaction) => {
+    if (interaction.isAutocomplete()) {
+        if (interaction.commandName == 'emoji') {
+            if (!fs.existsSync('./storage')) fs.mkdirSync('./storage');
+            if (!fs.existsSync('./storage/emojis'))
+                fs.mkdirSync('./storage/emojis');
+
+            const emojis = fs.existsSync('./storage/emojis/emojis.json')
+                ? JSON.parse(
+                      fs
+                          .readFileSync('./storage/emojis/emojis.json')
+                          .toString()
+                  )
+                : [];
+            if (emojis.length > 0) {
+                interaction.respond(
+                    emojis.map((val) => ({
+                        name: val.name,
+                        value: val.name,
+                    }))
+                );
+            } else {
+                interaction.respond([
+                    { name: "No emoji's yet", value: 'Whoopdie Doo' },
+                ]);
+            }
+        }
+    }
+
     if (interaction.isButton()) {
         try {
             await buttonHandler.handle(interaction, col_chatCommands);

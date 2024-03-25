@@ -1,24 +1,39 @@
-const { time } = require('console');
 const Discord = require('discord.js');
 const fs = require('fs');
 
-const gamesFilePath = './storage/shutthebox.json';
+const Dice = require('../customTools/Dice');
 const { rowYN } = require('./../interactions/buttons/rowYN');
-const embed = new Discord.EmbedBuilder().setColor('#ffffff');
+
+const gamesFilePath = './storage/shutthebox.json';
+
 /** @type {Discord.Message} */
-var message;
+var msg_main, msg_game;
+
+const COLORS = {
+    gray_hintofred: '#ccffcc',
+    gray_hintofgreen: '#ccffcc',
+    gray_hintofblue: '#ccccff',
+
+    white: '#ffffff',
+    gray: '#cccccc',
+    darkgray: '#999999',
+    black: '#000000',
+};
 
 const GAMESTAGES = {
-    Idle: 0,
-    Dicethrow: 1,
-    NumberSelect: 2,
+    Starting: 0,
+    NumberCheck: 1,
 };
+
+var GAME_INFO = 'No info atm';
+
+const filter = (i) => i.user.id === msg_main.author.id;
 
 const command = {
     name: 'wip', // required! (usually the same as file name)
-    short: '', // if you want it
+    short: 'stb', // if you want it
     description: 'work in progress', // usefull, not required
-    category: '', // empty for 'misc'
+    category: 'wip', // empty for 'misc'
     disabled: false,
 
     /**
@@ -29,126 +44,164 @@ const command = {
      * @param {String} curPrefix        // this bot prefix
      */
     async execute(client, msg, args, curPrefix) {
-        message = msg;
-        if (!fs.existsSync('./storage')) fs.mkdirSync('./storage');
+        msg_main = msg; // store the msg in msg_main (so everything can use it)
 
+        msg.delete();
+
+        if (!fs.existsSync('./storage')) fs.mkdirSync('./storage'); // check if the storage folder exists
+
+        // get the current games
         const games = fs.existsSync(gamesFilePath)
             ? JSON.parse(fs.readFileSync(gamesFilePath).toString())
             : {};
 
-        if (games[msg.author.id]?.activegame) {
-            embed
+        if (games[msg_main.author.id]?.activegame) {
+            // active game
+            const embed = embedGame()
                 .setTitle('Active Game.')
                 .setDescription(
                     'You have a active game. Would you like to stop that game?'
                 );
-            const response = await msg.channel.send({
+
+            const response = await msg_main.channel.send({
                 embeds: [embed],
                 components: [rowYN],
             });
 
-            const filter = (i) => i.user.id === msg.user.id;
-
             try {
+                // wait for interaction
                 const confirmation = await response.awaitMessageComponent({
                     filter,
                     time: 60000,
                 });
 
+                // if there was a interaction
                 if (confirmation.customId == 'y') {
-                    games[msg.author.id].activegame = false;
-                    games[msg.author.id].gamestate = {};
+                    // stop active game.
+                    games[msg_main.author.id].activegame = false;
+                    games[msg_main.author.id].gamestate = {};
+
                     embed
                         .setTitle('Active Game deleted.')
-                        .setDescription('')
-                        .setColor('Green');
+                        .setColor(COLORS.gray_hintofgreen)
+                        .setDescription(' ');
+                    saveGame(games[msg_main.author.id]);
                 } else if (confirmation.customId == 'n') {
+                    // dont stop active game
+
                     embed
                         .setTitle('Active Game *not* deleted.')
-                        .setDescription('')
-                        .setColor('#cccccc');
+                        .setColor(COLORS.gray)
+                        .setDescription(' ');
                 }
-                msg.edit({ embeds: [embed] });
+
+                response.edit({
+                    embeds: [embed],
+                    components: [],
+                });
             } catch (e) {
                 embed
                     .setDescription('No reaction was given in one minute.')
-                    .setColor('#cccccc');
-                response.edit({ embeds: [embed] });
+                    .setColor(COLORS.gray_hintofred)
+                    .setFooter({
+                        text: 'This message will be deleted in 10 seconds',
+                    });
+
+                response.edit({ embeds: [embed], components: [] });
+
+                waitFor(10, () => {
+                    if (response.deletable) response.delete();
+                });
+
+                return;
             }
 
-            return;
+            embed.setFooter({
+                text: 'This message will be deleted in 10 seconds',
+            });
+
+            response.edit({ embeds: [embed] });
+
+            waitFor(10, () => {
+                if (response.deletable) response.delete();
+            });
         }
+
+        // start/resume the game
         mainGame();
     },
 };
-async function waitFor(seconds) {
-    return new Promise((res) => setTimeout(() => res, seconds * 1000));
+async function waitFor(seconds = 1, onend = () => {}) {
+    return new Promise((res) =>
+        setTimeout(() => {
+            onend();
+            res();
+        }, seconds * 1000)
+    );
 }
 
 async function mainGame() {
-    const msg = message;
+    // init game message
+    msg_game = await msg_main.channel.send({
+        embeds: [embedGame().setTitle('Loading...')],
+    });
 
+    // Game setup
     const gameData = {};
 
     gameData.activegame = false;
     gameData.wins = 0;
-    const gamestate = {};
-    gameData.gamestate = gamestate;
-
-    gamestate.turn = 0;
-    gamestate.activeNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    gamestate.inactiveNumbers = [];
-    gamestate.selectedNumbers = [];
-    gamestate.requiredNum = 0;
-    gamestate.selectedNum = 0;
-    gamestate.state = GAMESTAGES.Idle;
+    const gs = new GameState();
+    gameData.gamestate = gs;
 
     gameData.activegame = true;
 
-    /** @type {Discord.Message} */
-    var gameMsg;
+    // wait 1 second before starting (this is purely so the loading looks like its actually loading something for a bit longer lol)
+    await waitFor();
 
-    const numberbuttons = [
-        numberbtn(1),
-        numberbtn(2),
-        numberbtn(3),
-        numberbtn(4),
-        numberbtn(5),
-        numberbtn(6),
-        numberbtn(7),
-        numberbtn(8),
-        numberbtn(9),
-        numberbtn(10),
-    ];
-
+    // state based game loop
     while (gameData.activegame) {
-        switch (gamestate.state) {
-            case GAMESTAGES.Idle:
-                embed
+        switch (gs.state) {
+            case GAMESTAGES.Starting:
+                // start of a new game
+                var embed = embedGame()
+                    .setColor(COLORS.gray_hintofblue)
                     .setTitle('New Game')
                     .setDescription('Start new game?');
 
-                gameMsg = await msg.channel.send({
+                msg_game.edit({
                     embeds: [embed],
                     components: [rowYN],
                 });
 
-                const filter = (i) => i.user.id === message.author.id;
-
                 try {
                     const confirmation =
-                        await gameMsg.awaitMessageComponent({
+                        await msg_game.awaitMessageComponent({
                             filter,
-                            time: 60000,
+                            time: 600000, // 60 seconds * 1000 for ms * 10 for 10 minutes = 600.000
                         });
 
                     if (confirmation.customId == 'y') {
-                        gamestate.state = GAMESTAGES.Dicethrow;
+                        embed
+                            .setTitle('Okay, have fun!')
+                            .setDescription('Game will start soon!')
+                            .setColor(COLORS.gray_hintofgreen);
 
-                        await waitFor(1);
+                        msg_game.edit({
+                            embeds: [embed],
+                            components: [],
+                        });
+
+                        await waitFor(2);
+
+                        gs.state = GAMESTAGES.NumberCheck;
+
+                        break;
                     } else if (confirmation.customId == 'n') {
+                        // format embed
                         embed
                             .setTitle('OK!')
+                            .setColor(COLORS.gray_hintofgreen)
                             .setDescription(
                                 `Use ${command.name} ${
                                     command.short != ''
@@ -157,75 +210,151 @@ async function mainGame() {
                                 } to start a new game`
                             )
                             .setFooter({
-                                text: 'Message will be deleted in 1 minute',
+                                text: 'Message will be deleted in 10 seconds',
                             });
-                        gameMsg.edit({ embeds: [embed], components: [] });
-                        await waitFor(60);
-                        if (gameMsg.deletable) gameMsg.delete();
+
+                        msg_game.edit({
+                            embeds: [embed],
+                            components: [],
+                        });
+
                         gameData.activegame = false;
-                        saveGame(gameData);
+                        saveGame(gameData); // save the data
+
+                        // delete message after a minute
+                        waitFor(10, () => {
+                            if (msg_game.deletable) msg_game.delete();
+                        });
+
+                        break;
                     }
                 } catch (e) {
+                    // format embed
                     embed
                         .setTitle('Nothing Selected.')
-                        .setDescription(' ')
+                        .setDescription(
+                            'Restart by using the command again.'
+                        )
                         .setFooter({
                             text: 'Message will be deleted in 1 minute',
                         });
-                    gameMsg.edit({ embeds: [embed], components: [] });
-                    await waitFor(60);
-                    if (gameMsg.deletable) gameMsg.delete();
+
+                    msg_game.edit({ embeds: [embed], components: [] });
                     gameData.activegame = false;
                     saveGame(gameData);
+
+                    waitFor(60, () => {
+                        if (msg_game.deletable) msg_game.delete();
+                    });
                 }
 
-            case GAMESTAGES.Dicethrow:
-                gamestate.turn++;
+                break;
 
-                const die1 = Math.floor(Math.random() * 12);
-                const die2 = Math.floor(Math.random() * 12);
+            case GAMESTAGES.NumberCheck:
+                gs.moves++;
 
-                gamestate.requiredNum = die1 + die2;
+                // check if more than 2 selected numbers
+                if (gs.selectedNumbers.length > 2) {
+                    // cant have more than 2 selected numbers
+                    GAME_INFO = "You can't select more than 2 numbers";
+                    gs.state = GAMESTAGES.NumberSelect;
+                    break;
+                }
 
-                embed
+                if (gs.selectedTotal > gs.requiredTotal) {
+                    // to much
+                    GAME_INFO = 'That is too much.';
+                    gs.state = GAMESTAGES.NumberSelect;
+                    break;
+                }
+                if (gs.selectedTotal < gs.requiredTotal) {
+                    // not enough
+                    GAME_INFO = 'That is not enough.';
+                    gs.state = GAMESTAGES.NumberSelect;
+                    break;
+                }
+
+                if (gs.selectedTotal == gs.requiredTotal) {
+                    GAME_INFO = 'No info atm';
+
+                    if (gs.selectedNumbers == 1) {
+                        // 1 number selected
+                    } else {
+                        // 2 numbers selected
+                    }
+
+                    gs.selectedNumbers.forEach((x) =>
+                        removeItemOnce(gs.numberActive, x)
+                    );
+
+                    gs.selectedNumbers.forEach((x) =>
+                        gs.inactiveNumbers.push(x)
+                    );
+
+                    gs.state = GAMESTAGES.NumberSelect;
+                }
+
+            //
+
+            case GAMESTAGES.NumberSelect:
+                var embed = embedGame()
                     .setTitle('Active game.')
+                    .setColor(COLORS.gray_hintofblue)
                     .setDescription(
                         `Numbers thrown are ${die1} and ${die2}`
                     )
-                    .setColor('Green');
+                    .addFields(
+                        {
+                            name: 'Required total',
+                            value: `Select 1 or 2 die to create a total of ${gs.requiredTotal}`,
+                        },
+                        {
+                            name: 'Current total',
+                            value: `Your current total is: ${gs.selectedTotal}`,
+                        },
+                        {
+                            name: 'Info',
+                            value: GAME_INFO,
+                        }
+                    );
 
-                gamestate.state = GAMESTAGES.NumberSelect;
-
-            case GAMESTAGES.NumberSelect:
                 numberbuttons.forEach((btn) =>
                     btn.setStyle(Discord.ButtonStyle.Secondary)
                 );
-                gamestate.selectedNumbers.forEach((i) =>
+                gs.selectedNumbers.forEach((i) =>
                     numberbuttons[i].setStyle(Discord.ButtonStyle.Primary)
                 );
+                gs.inactiveNumbers.forEach((i) => {
+                    numberbuttons[i].setStyle(Discord.ButtonStyle.Success);
+                });
+
                 const row1 = new Discord.ActionRowBuilder();
                 const row2 = new Discord.ActionRowBuilder();
+
                 for (var i = 0; i < 5; i++) {
                     row1.addComponents(numberbuttons[i]);
                     row2.addComponents(numberbuttons[i + 5]);
                 }
-                gameMsg = await gameMsg.edit({
+
+                msg_game.edit({
                     embeds: [embed],
                     components: [row1, row2],
                 });
 
                 try {
                     const confirmation =
-                        await gameMsg.awaitMessageComponent({
+                        await msg_game.awaitMessageComponent({
                             filter,
                             time: 600000,
                         });
 
-                    console.log(
-                        gamestate.selectedNumbers.includes(
-                            confirmation.customId
-                        )
-                    );
+                    var selectedNum = confirmation.customId;
+
+                    if (gs.selectedNumbers.includes(selectedNum)) {
+                        removeItemOnce(gs.selectedNumbers, selectedNum);
+                    } else {
+                        gs.selectedNumbers.push(selectedNum);
+                    }
                 } catch (e) {
                     var description =
                         'Your game should be saved (' + command.name;
@@ -240,13 +369,15 @@ async function mainGame() {
                         .setTitle('You Waited 10 minutes...')
                         .setDescription(description)
                         .setFooter({
-                            text: 'This message will be deleted in 1 minute',
+                            text: 'This message will be deleted in 10 seconds',
                         });
-                    gameMsg.edit({ embeds: [embed], components: [] });
+                    msg_game.edit({ embeds: [embed], components: [] });
 
                     gameData.activegame = false;
-                    await waitFor(60);
-                    if (gameMsg.deletable) gameMsg.delete();
+
+                    waitFor(10, () => {
+                        if (msg_game.deletable) msg_game.delete();
+                    });
                 }
         }
     }
@@ -264,9 +395,187 @@ async function saveGame(gameData) {
         ? JSON.parse(fs.readFileSync(gamesFilePath).toString())
         : {};
 
-    games[message.author.id] = gameData;
+    games[msg_main.author.id] = gameData;
 
     fs.writeFileSync(gamesFilePath, JSON.stringify(games));
+}
+
+function embedGame() {
+    return new Discord.EmbedBuilder()
+        .setColor(COLORS.black)
+        .setTitle('DEFAULT TITLE')
+        .setAuthor({
+            name:
+                'Playing: ' + msg_main.member.nickname ??
+                msg_main.member.displayName,
+            iconURL: msg_main.member.avatarURL({
+                size: 1024,
+                extension: 'jpg',
+            }),
+        });
+}
+
+/**
+ *
+ * @param {Array} arr
+ * @param {any} value
+ * @returns {void}
+ */
+function removeItemOnce(arr, value) {
+    var index = arr.indexOf(value);
+    if (index > -1) {
+        arr.splice(index, 1);
+    }
+    return arr;
+}
+
+class ShutTheBox {
+    playerId = 0;
+    gamestate = GAMESTAGES.Starting;
+
+    movesTaken = 0;
+    numbersDeactivated = {
+        1: false,
+        2: false,
+        3: false,
+        4: false,
+        5: false,
+        6: false,
+        7: false,
+        8: false,
+        9: false,
+        10: false,
+    };
+
+    selectedNum1 = 0;
+    selectedNum2 = 0;
+
+    die1 = new Dice();
+    die2 = new Dice();
+
+    row1 = [
+        numberbtn(1),
+        numberbtn(2),
+        numberbtn(3),
+        numberbtn(4),
+        numberbtn(5),
+    ];
+    row2 = [
+        numberbtn(6),
+        numberbtn(7),
+        numberbtn(8),
+        numberbtn(9),
+        numberbtn(10),
+    ];
+
+    constructor(userId) {
+        this.playerId = userId;
+    }
+
+    get requiredTotal() {
+        return this.die1.num + this.die2.num;
+    }
+
+    get selectedTotal() {
+        return this.selectedNum1 + this.selectedNum2;
+    }
+
+    get numbersButtonRow1() {
+        for (var i of this.row1) {
+            console.log(i);
+        }
+    }
+    get numbersButtonRow2() {}
+
+    get savedata() {
+        return {
+            gamestate: this.gamestate,
+            movesTaken: this.movesTaken,
+            numbersDeactivated: JSON.stringify(this.numbersDeactivated),
+            selectedNum1: this.selectedNum1,
+            selectedNum2: this.selectedNum2,
+            die1: { num: this.die1.num, sides: this.die1.sides },
+            die2: { num: this.die2.num, sides: this.die2.sides },
+        };
+    }
+
+    saveGame() {
+        if (!fs.existsSync('./storage')) fs.mkdirSync('./storage');
+        if (!fs.existsSync(gamesFilePath))
+            fs.writeFileSync(gamesFilePath, '{}');
+
+        const games = JSON.parse(
+            fs.readFileSync(gamesFilePath).toString()
+        );
+
+        games[this.playerId] = this.savedata;
+
+        fs.writeFileSync(gamesFilePath, JSON.stringify(games));
+    }
+
+    get availableNumbers() {
+        var available = [];
+        for (var n in this.numbersDeactivated) {
+            if (!this.numbersDeactivated[n]) available.push(parseInt(n));
+        }
+        return available;
+    }
+
+    get isPossible() {
+        // check if the required total is one of the available numbers
+        if (this.availableNumbers.includes(this.requiredTotal))
+            return true;
+
+        // check combination
+        const available = this.availableNumbers;
+        var num2options;
+
+        for (var i = 0; i < available.length; i++) {
+            const num1 = available[i];
+            num2options = available.filter((x) => x != num1);
+            for (var j = 0; j < num2options.length; j++) {
+                const num2 = num2options[j];
+
+                const combination = num1 + num2;
+
+                if (combination == this.requiredTotal) return true;
+            }
+        }
+
+        // no combination was possible
+        return false;
+    }
+
+    static fromUserId(userid) {
+        if (!fs.existsSync('./storage') || !fs.existsSync(gamesFilePath))
+            return null;
+
+        const games = JSON.parse(
+            fs.readFileSync(gamesFilePath).toString()
+        );
+
+        if (games[userid] == undefined) return null;
+
+        const gd = games[userid];
+
+        const stb = new ShutTheBox();
+
+        stb.playerId = userid;
+
+        stb.gamestate = gd.gamestate;
+        stb.movesTaken = gd.movesTaken;
+        stb.numbersDeactivated = JSON.parse(gd.numbersDeactivated);
+        stb.selectedNum1 = 0;
+        stb.selectedNum2 = 0;
+
+        stb.die1.num = gd.die1.num;
+        stb.die1.sides = gd.die1.sides;
+
+        stb.die2.num = gd.die2.num;
+        stb.die2.sides = gd.die2.sides;
+
+        return stb;
+    }
 }
 
 module.exports = command;
