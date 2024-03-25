@@ -56,7 +56,6 @@ module.exports = {
             emojis.push({ name, image: image.attachment });
 
             interaction.editReply('Added emoji!');
-            console.log(emojis);
 
             fs.writeFileSync(
                 'storage/emojis/emojis.json',
@@ -80,7 +79,7 @@ module.exports = {
 
             const e = await guild.emojis.create({
                 attachment: emoji.image,
-                name: emoji.name,
+                name: emoji.name.replace(/[^\w]/g, '_'),
                 reason: 'Create emoji with command',
             });
 
