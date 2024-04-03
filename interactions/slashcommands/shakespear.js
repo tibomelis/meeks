@@ -28,10 +28,10 @@ module.exports = {
 
         const translated = x?.contents?.translated;
 
-        const embed = new EmbedBuilder();
-        embed.setName('Hither is thy translation!');
-        embed.setDescription(`translation: ${translated}`);
-        embed.setColor('#ff0000');
+        const embed = new EmbedBuilder()
+            .setTitle('Hither is thy translation!')
+            .setDescription(`translation: ${translated}`)
+            .setColor('#ff0000');
 
         interaction.editReply({ embeds: [embed] });
     },
