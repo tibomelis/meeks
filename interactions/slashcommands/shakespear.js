@@ -30,8 +30,11 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setTitle('Hither is thy translation!')
-            .setDescription(`translation: ${translated}`)
-            .setColor('#ff0000');
+            .addFields(
+                { name: 'From', value: `${text}` },
+                { name: 'To', value: `${translated}` }
+            )
+            .setColor('#5D92BA');
 
         interaction.editReply({ embeds: [embed] });
     },
